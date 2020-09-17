@@ -204,6 +204,7 @@ open_wallet() {
     # wallet_02: 56VbjczrFCVZiLn66S3Qzv8QfmtcwkdXgM5cWGsXAPxoQeMQ79md51PLPCijvzk1iHbuHi91pws5B7iajTX9KTtJ4Z6HAo6
     # wallet_03: 5BXAsDboVYEQcxEUsi761WbnJWsFRCwh1PkiGtGnUUcJTGenfCr5WEtdoXezutmPiQMsaM4zJbpdH5PMjkCt7QrXAbj3Qrc
 
+    # By default this connects to node_01
     monero-wallet-cli --$net_type --trusted-daemon --wallet-file $dir/$_wallet --password '' --log-file $dir/$_wallet.log
 }
 
