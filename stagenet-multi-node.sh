@@ -173,11 +173,11 @@ start_nodes() {
 
     # Start the first node and start mining to wallet_01
     # Listens on ports 38080, 38081, 38082
-    monerod --$net_type  --no-igd --hide-my-port --data-dir ~/$dir/node_01 --p2p-bind-ip 127.0.0.1 --log-level 0 --add-exclusive-node 127.0.0.1:38080 --add-exclusive-node 127.0.0.1:48080  --fixed-difficulty $difficulty --detach --start-mining 56bCoEmLPT8XS82k2ovp5EUYLzBt9pYNW2LXUFsZiv8S3Mt21FZ5qQaAroko1enzw3eGr9qC7X1D7Geoo2RrAotYPx1iovY
+    monerod --$net_type  --no-igd --hide-my-port --data-dir ~/$dir/node_01 --p2p-bind-ip 127.0.0.1 --log-level 0 --add-exclusive-node 127.0.0.1:48080 --add-exclusive-node 127.0.0.1:58080  --fixed-difficulty $difficulty --detach --start-mining 56bCoEmLPT8XS82k2ovp5EUYLzBt9pYNW2LXUFsZiv8S3Mt21FZ5qQaAroko1enzw3eGr9qC7X1D7Geoo2RrAotYPx1iovY
 
-    monerod --$net_type --p2p-bind-port 48080 --rpc-bind-port 48081 --zmq-rpc-bind-port 48082 --no-igd --hide-my-port  --log-level $log_level --data-dir $dir/node_02 --p2p-bind-ip 127.0.0.1 --add-exclusive-node 127.0.0.1:28080 --add-exclusive-node 127.0.0.1:48080 --fixed-difficulty $difficulty --detach
+    monerod --$net_type --p2p-bind-port 48080 --rpc-bind-port 48081 --zmq-rpc-bind-port 48082 --no-igd --hide-my-port  --log-level $log_level --data-dir $dir/node_02 --p2p-bind-ip 127.0.0.1 --add-exclusive-node 127.0.0.1:38080 --add-exclusive-node 127.0.0.1:58080 --fixed-difficulty $difficulty --detach
 
-    monerod --$net_type --p2p-bind-port 58080 --rpc-bind-port 58081 --zmq-rpc-bind-port 58082 --no-igd --hide-my-port  --log-level $log_level --data-dir $dir/node_03 --p2p-bind-ip 127.0.0.1 --add-exclusive-node 127.0.0.1:28080 --add-exclusive-node 127.0.0.1:38080 --fixed-difficulty $difficulty --detach
+    monerod --$net_type --p2p-bind-port 58080 --rpc-bind-port 58081 --zmq-rpc-bind-port 58082 --no-igd --hide-my-port  --log-level $log_level --data-dir $dir/node_03 --p2p-bind-ip 127.0.0.1 --add-exclusive-node 127.0.0.1:38080 --add-exclusive-node 127.0.0.1:48080 --fixed-difficulty $difficulty --detach
 }
 
 # Undoes start_nodes()
