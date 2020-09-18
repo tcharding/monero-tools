@@ -10,12 +10,16 @@
 # If this is the first time you've used `stagenet.sh` you probably want to run the following three commands
 #
 #    stagenet --create-wallet
-#    stagenet --start-monerod
-#    stagenet --open-wallet
+#    stagenet --start
+#    curl http://127.0.0.1:2020/json_rpc -d '{"jsonrpc":"2.0","id":"0","method":"get_height"}' -H 'Content-Type: application/json'
+#    {
+#       "id": "0",
+#       "jsonrpc": "2.0",
+#       "result": {
+#       "height": 1
+#    }
 
 set -u # Undefined variables are errors
-
-# curl http://127.0.0.1:38081/json_rpc -d '{"jsonrpc":"2.0","id":"0","method":"get_height"}' -H 'Content-Type: application/json'
 
 main() {
     # No default action, we expect a flag.
