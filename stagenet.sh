@@ -19,6 +19,17 @@
 #       "height": 1
 #    }
 
+# viewkey
+
+# secret: 42ba20adb337e5eca797565be11c9adb0a8bef8c830bccc2df712535d3b8f608
+# public: 1c06bcac7082f73af10460b5f2849aded79374b2fbdaae5d9384b9b6514fddcb
+
+# spendkey
+
+# secret: b0ef6bd527b9b23b9ceef70dc8b4cd1ee83ca14541964e764ad23f5151204f0f
+# public: 7d996b0f2db6dbb5f2a086211f2399a4a7479b2c911af307fdc3f7f61a88cb0e
+
+
 set -u # Undefined variables are errors
 
 main() {
