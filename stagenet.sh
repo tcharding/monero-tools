@@ -70,26 +70,39 @@ assert_root_dir() {
 handle_command_line_args() {
     local _help=false
     local _create=false
+    local _open=false
+
+    local _start=false
+    local _stop=false
+
     local _start_nodes=false
     local _stop_nodes=false
     local _restart_nodes=false
+
     local _start_wallet_rpc=false
     local _stop_wallet_rpc=false
-    local _open=""
 
     local _arg
     for _arg in "$@"; do
         case "${_arg%%=*}" in
-            --start-nodes )
+            --start )
                 _start=true
                 ;;
 
-            --stop-nodes )
+            --stop )
                 _stop=true
                 ;;
 
+            --start-nodes )
+                _start_nodes=true
+                ;;
+
+            --stop-nodes )
+                _stop_nodes=true
+                ;;
+
             --restart-nodes )
-                _restart=true
+                _restart_nodes=true
                 ;;
 
             --create-wallet )
@@ -167,11 +180,33 @@ handle_command_line_args() {
         if [ $? != 0 ]; then
             _succeeded=false
         fi
+    elif [ "$_start" = true ]; then
+        start
+        if [ $? != 0 ]; then
+            _succeeded=false
+        fi
+    elif [ "$_stop" = true ]; then
+        stop
+        if [ $? != 0 ]; then
+            _succeeded=false
+        fi
     fi
 
     if [ "$_succeeded" = false ]; then
         exit 1
     fi
+}
+
+# Helper function to start the whole kit and caboodle
+start() {
+    
+    start_nodes
+    start_wallet_rpc
+}
+
+stop() {
+    stop_nodes
+    stop_wallet_rpc
 }
 
 # Start the 2 monerod nodes.
@@ -233,6 +268,8 @@ Usage: stagenet.sh [--verbose]
 
 Options:
 
+     --start                    Start monerods and wallet-rpc
+     --stop                     Stop monerods and wallet-rpc
      --start-nodes              Start the monerod nodes
      --stop-nodes               Stop the nodes
      --restart-nodes            Start then stop the nodes
