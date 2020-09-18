@@ -15,6 +15,8 @@
 
 set -u # Undefined variables are errors
 
+# curl http://127.0.0.1:38081/json_rpc -d '{"jsonrpc":"2.0","id":"0","method":"get_height"}' -H 'Content-Type: application/json'
+
 main() {
     # No default action, we expect a flag.
     if [ $# -eq 0 ]; then
@@ -47,6 +49,9 @@ set_globals() {
     # Mining difficulty
     difficulty=1
 
+    # JSON-RPC port number used by monero-wallet-rpc, arbitrarily chosen.
+    wallet_rpc_port=2021
+
     # Script verbosity level.
     flag_verbose=false
 
@@ -65,14 +70,28 @@ assert_root_dir() {
 handle_command_line_args() {
     local _help=false
     local _create=false
-    local _start=false
-    local _stop=false
-    local _restart=false
+    local _start_nodes=false
+    local _stop_nodes=false
+    local _restart_nodes=false
+    local _start_wallet_rpc=false
+    local _stop_wallet_rpc=false
     local _open=""
 
     local _arg
     for _arg in "$@"; do
         case "${_arg%%=*}" in
+            --start-nodes )
+                _start=true
+                ;;
+
+            --stop-nodes )
+                _stop=true
+                ;;
+
+            --restart-nodes )
+                _restart=true
+                ;;
+
             --create-wallet )
                 _create=true
                 ;;
@@ -81,18 +100,13 @@ handle_command_line_args() {
                 _open=true
                 ;;
 
-            --start )
-                _start=true
+            --start-wallet-rpc )
+                _start_wallet_rpc=true
                 ;;
 
-            --stop )
-                _stop=true
+            --stop-wallet-rpc )
+                _stop_wallet_rpc=true
                 ;;
-
-            --restart )
-                _restart=true
-                ;;
-
             -h | --help )
                 _help=true
                 ;;
@@ -118,7 +132,22 @@ handle_command_line_args() {
 
     local _succeeded=true
 
-    if [ "$_create" = true ]; then
+    if [ "$_start_nodes" = true ]; then
+        start_nodes
+        if [ $? != 0 ]; then
+            _succeeded=false
+        fi
+    elif [ "$_stop_nodes" = true ]; then
+        stop_nodes
+        if [ $? != 0 ]; then
+            _succeeded=false
+        fi
+    elif [ "$_restart_nodes" = true ]; then
+        restart_nodes
+        if [ $? != 0 ]; then
+            _succeeded=false
+        fi
+    elif [ "$_create" = true ]; then
         create_wallet
         if [ $? != 0 ]; then
             _succeeded=false
@@ -128,18 +157,13 @@ handle_command_line_args() {
         if [ $? != 0 ]; then
             _succeeded=false
         fi
-    elif [ "$_start" = true ]; then
-        start
+    elif [ "$_start_wallet_rpc" = true ]; then
+        start_wallet_rpc
         if [ $? != 0 ]; then
             _succeeded=false
         fi
-    elif [ "$_stop" = true ]; then
-        stop
-        if [ $? != 0 ]; then
-            _succeeded=false
-        fi
-    elif [ "$_restart" = true ]; then
-        restart
+    elif [ "$_stop_wallet_rpc" = true ]; then
+        stop_wallet_rpc
         if [ $? != 0 ]; then
             _succeeded=false
         fi
@@ -148,6 +172,30 @@ handle_command_line_args() {
     if [ "$_succeeded" = false ]; then
         exit 1
     fi
+}
+
+# Start the 2 monerod nodes.
+start_nodes() {
+    verbose_say "Starting private $net monerod instances ..."
+
+    # FIXME: Mining works, wallet has a bunch of coins in it but when connecting to node we get an error that mining never started?
+
+    # Listens on ports 38080, 38081, 38082
+    monerod --$net  --no-igd --hide-my-port --data-dir $dir/node_01 --p2p-bind-ip 127.0.0.1 --log-level $log_level --add-exclusive-node 127.0.0.1:48080  --fixed-difficulty $difficulty --detach
+
+    monerod --$net --p2p-bind-port 48080 --rpc-bind-port 48081 --zmq-rpc-bind-port 48082 --no-igd --hide-my-port  --log-level $log_level --data-dir $dir/node_02 --p2p-bind-ip 127.0.0.1 --add-exclusive-node 127.0.0.1:38080 --fixed-difficulty $difficulty --detach
+
+}
+
+# Undoes start_nodes()
+stop_nodes() {
+    monerod --rpc-bind-port 38081 exit
+    monerod --rpc-bind-port 48081 exit
+}
+
+restart_nodes() {
+    stop_nodes
+    start_nodes
 }
 
 # Creates a Monero wallet in artefact directory.
@@ -159,7 +207,7 @@ function create_wallet() {
 
     if [ "$flag_verbose" = true ]; then
         say  "created wallet in $dir"
-	ls $dir
+        ls $dir
     fi
 }
 
@@ -171,30 +219,12 @@ open_wallet() {
     monero-wallet-cli --$net --trusted-daemon --wallet-file $dir/wallet --password '' --log-file $dir/wallet.log
 }
 
-# Starts monerod nodes.
-start() {
-    verbose_say "Starting private $net monerod instances ..."
-
-    # FIXME: Mining works, wallet has a bunch of coins in it but when connecting to node we get an error that mining never started?
-
-    # Listens on ports 38080, 38081, 38082
-    monerod --$net  --no-igd --hide-my-port --data-dir $dir/node_01 --p2p-bind-ip 127.0.0.1 --log-level $log_level --add-exclusive-node 127.0.0.1:48080  --fixed-difficulty $difficulty --detach
-
-    monerod --$net --p2p-bind-port 48080 --rpc-bind-port 48081 --zmq-rpc-bind-port 48082 --no-igd --hide-my-port  --log-level $log_level --data-dir $dir/node_02 --p2p-bind-ip 127.0.0.1 --add-exclusive-node 127.0.0.1:38080 --fixed-difficulty $difficulty --detach
-
-
-    # monerod --$net  --no-igd --hide-my-port --data-dir ~/$dir/node --p2p-bind-ip 127.0.0.1 --log-level 0  --fixed-difficulty $difficulty --detach --start-mining 56bCoEmLPT8XS82k2ovp5EUYLzBt9pYNW2LXUFsZiv8S3Mt21FZ5qQaAroko1enzw3eGr9qC7X1D7Geoo2RrAotYPx1iovY --log-file $dir/bitmonero.log
+start_wallet_rpc() {
+    monero-wallet-rpc --$net --log-file $dir/wallet-rpc.log --wallet-file $dir/wallet --password '' --rpc-bind-port $wallet_rpc_port --disable-rpc-login --detach
 }
 
-# Undoes start()
-stop() {
-    monerod --rpc-bind-port 38081 exit
-    monerod --rpc-bind-port 48081 exit
-}
-
-restart() {
-    stop
-    start
+stop_wallet_rpc() {
+    pkill monero-wallet-r
 }
 
 print_help() {
@@ -203,11 +233,13 @@ Usage: stagenet.sh [--verbose]
 
 Options:
 
-     --start                    Start the monerod nodes
-     --stop                     Stop the nodes
-     --restart                  Start then stop the nodes
+     --start-nodes              Start the monerod nodes
+     --stop-nodes               Stop the nodes
+     --restart-nodes            Start then stop the nodes
      --create-wallet            Create a wallet
      --open-wallet              Open the wallet
+     --start-wallet-rpc         Start a monero-wallet-rpc instance connected to node_01
+     --stop-wallet-rpc          Kill the monero-wallet-rpc instance
      --help, -h                 Display usage information
 '
 }
